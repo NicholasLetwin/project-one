@@ -61,16 +61,18 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
       <div class="wrapper">
         <h3><span>${this.t.title}:</span> ${this.title}</h3>
         
-        <!-- Input for URL and Button to Analyze -->
-        <input
-          type="text"
-          .value="${this.url}"
-          @input="${e => this.url = e.target.value}"
-          placeholder="Enter site URL"
-        />
-        <button @click="${this.fetchSiteData}">Analyze</button>
-
-        <!-- Display site data if available -->
+        <div class="search-bar">
+          <input
+            type="text"
+            .value="${this.url}"
+            @input="${e => this.url = e.target.value}"
+            placeholder="https://haxtheweb.org/site.json"
+          />
+          <button @click="${this.fetchSiteData}">
+            <span>Analyze</span>
+          </button>
+        </div>
+  
         ${this.siteData ? this.renderSiteData() : html`<p>Enter a URL to analyze</p>`}
       </div>
     `;
@@ -86,7 +88,7 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
         <p>Description: ${this.siteData.description || "No description available"}</p>
         <p>Site Name: ${site.name || "No site name available"}</p>
         
-        <!-- Display logo if available -->
+        <!-- displays logo if possible -->
         ${site.logo ? html`<img src="${site.logo}" alt="Site Logo" class="site-logo" />` : ""}
   
         <p>Theme: ${theme.name || "No theme available"}</p>
@@ -143,37 +145,62 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
       .wrapper {
         margin: var(--ddd-spacing-2);
         padding: var(--ddd-spacing-4);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .search-bar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: var(--ddd-spacing-4);
       }
       input[type="text"] {
-        padding: 0.5em;
-        margin-right: 0.5em;
-        font-size: 1em;
+        padding: var(--ddd-spacing-4);
+        font-size: 1.2em;
+        width: 350px;
+        border: 2px solid var(--ddd-border-color, #ccc);
+        border-radius: var(--ddd-border-radius, 8px) 0 0 var(--ddd-border-radius,8px);
+        outline: none;
+        transition: border-color 0.3s ease;
       }
+      input[type="text"]:focus {
+      border-color: var(--ddd-theme-aqua, #86f1ff);
+    }
       button {
-        padding: 0.5em 1em;
-        font-size: 1em;
+        padding: var(--ddd-spacing-2) var(--ddd-spacing-3);
+        font-size: 1.2em;
         cursor: pointer;
-        background-color: var(--ddd-primary-color);
-        color: white;
+        background-color: var(--ddd-theme-aqua, #86f1ff);
+        color: var(--ddd-text-color, black);
         border: none;
-        border-radius: 5px;
+        border-radius: 0 var(--ddd-border-radius, 8px) var(--ddd-border-radius, 8px) 0;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+      }
+      button:hover {
+        background-color: var(--ddd-theme-aqua-hover, aqua); /* Slightly darker aqua for hover effect */
       }
       .site-overview {
-        margin-top: 1em;
+        margin-top: var(--ddd-spacing-2);
+        text-align: center;
       }
       .card-container {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1em;
+        gap: var(--ddd-spacing-2);
+        margin-top: var(--ddd-spacing-2);
       }
       .card {
-        border: 1px solid #ddd;
-        padding: 1em;
-        background-color: white;
-        border-radius: 5px;
+        border: 1px solid var(--ddd-border-color, #ddd);
+        padding: var(--ddd-spacing-2);
+        background-color: var(--ddd-theme-background, white);
+        border-radius: var(--ddd-border-radius, 5px);
+        text-align: center;
       }
     `];
   }
+  
+  
 
 //   // Lit render the HTML
 //   render() {
