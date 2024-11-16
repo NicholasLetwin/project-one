@@ -37,15 +37,28 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
     };
   }
 
+  fixedUrl(url) {
+    // ensures the url starts with "https://"
+    if (!url.startsWith("https")) {
+      url = `https://${url}`;
+    }
+    // add "/site.json" if necessary
+    if (!url.endsWith("/site.json")) {
+      url = `${url}/site.json`;
+    }
+    return url;
+  }
+
   async fetchSiteData() {
     if (!this.url) {
       console.warn("Please enter a valid URL");
       return;
     }
-    
-    // Check if the URL already includes 'site.json'
-    const apiUrl = this.url.endsWith('/site.json') ? this.url : `${this.url}/site.json`;
   
+    // 'fix' the entered URL (add https:// and /site.json if missing)
+    const apiUrl = this.fixedUrl(this.url);
+    this.url = apiUrl;
+
     try {
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error("Invalid URL or no site.json found");
@@ -55,6 +68,7 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
       this.siteData = null;
     }
   }
+  
 
   render() {
     return html`
@@ -81,37 +95,47 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
   renderSiteData() {
     const site = this.siteData.metadata?.site || {};
     const theme = this.siteData.metadata?.theme || {};
+    console.log(this.siteData.items);
+
+    const baseUrl = this.url.replace('/site.json', '');
     
     return html`
-      <div class="site-overview">
-        <h2>${this.siteData.title || "No title available"}</h2>
-        <p>Description: ${this.siteData.description || "No description available"}</p>
-        <p>Site Name: ${site.name || "No site name available"}</p>
-        
-        <!-- displays logo if possible -->
-        ${site.logo ? html`<img src="${site.logo}" alt="Site Logo" class="site-logo" />` : ""}
-  
-        <p>Theme: ${theme.name || "No theme available"}</p>
-        <p>Created: ${site.created ? new Date(site.created * 1000).toLocaleDateString() : "No creation date available"}</p>
-        <p>Last Updated: ${site.updated ? new Date(site.updated * 1000).toLocaleDateString() : "No update date available"}</p>
-      </div>
-      <div class="card-container">
-        ${this.siteData.items && this.siteData.items.length > 0
-          ? this.siteData.items.map(
-              item => html`
-                <div class="card">
-                  <h3>${item.title || "No title available"}</h3>
-                  <p>${item.description || "No description available"}</p>
-                  <a href="${item.url || "#"}" target="_blank">Open Page</a>
-                </div>
-              `
-            )
-          : html`<p>No items available</p>`
-        }
-      </div>
-    `;
-  }
-  
+    <div class="card-container">
+      ${this.siteData.items && this.siteData.items.length > 0
+        ? this.siteData.items.map(item => {
+            // Construct the full URL for the item's page
+            const fullUrl = item.location.startsWith("http")
+              ? item.location
+              : `${baseUrl}/${item.location}`;
+
+            // Handle optional fields like description or icon
+            const description = item.description || "No description available";
+            const title = item.title || "No title available";
+            const icon = item.icon || "icons:info"; // Default icon if none provided
+
+            return html`
+              <div class="card">
+                
+                <h3>${title}</h3>
+
+                <p>${description}</p>
+
+                
+                ${item.image
+                  ? html`<img src="${item.image}" alt="${item.title}" class="card-thumbnail" />`
+                  : html`<simple-icon
+                      icon="${icon}" 
+                      style="--simple-icon-width: 48px; --simple-icon-height: 48px; color: var(--ddd-theme-primary, #4caf50);"
+                    ></simple-icon>`}
+
+                <a href="${fullUrl}" target="_blank">Open page source</a>
+              </div>
+            `;
+          })
+        : html`<p>No items available</p>`}
+    </div>
+  `;
+}
 
 
   // Lit scoped styles
@@ -185,18 +209,42 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
         text-align: center;
       }
       .card-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: var(--ddd-spacing-2);
-        margin-top: var(--ddd-spacing-2);
-      }
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: var(--ddd-spacing-4); 
+          margin-top: var(--ddd-spacing-4);
+        }
       .card {
-        border: 1px solid var(--ddd-border-color, #ddd);
-        padding: var(--ddd-spacing-2);
-        background-color: var(--ddd-theme-background, white);
-        border-radius: var(--ddd-border-radius, 5px);
-        text-align: center;
-      }
+          background-color: var(--ddd-theme-background, #fff); 
+          color: var(--ddd-text-color, #000); 
+          padding: var(--ddd-spacing-4);
+          border-radius: var(--ddd-border-radius, 8px); 
+          box-shadow: var(--ddd-box-shadow, 0 4px 8px rgba(0, 0, 0, 0.2)); 
+          text-align: center;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+          transform: scale(1.02); 
+          box-shadow: var(--ddd-box-shadow-hover, 0 6px 12px rgba(0, 0, 0, 0.3)); 
+        }
+        .card h3 {
+          margin: var(--ddd-spacing-2) 0;
+          font-size: var(--ddd-font-size-s);
+          color: var(--ddd-theme-primary, #000000)
+        } 
+        .card p {
+          margin: var(--ddd-spacing-2) 0;
+          font-size: var(--ddd-font-size-xs); 
+          color: var(--ddd-text-secondary, #666); 
+        }
+        .card a {
+          display: inline-block;
+          margin-top: var(--ddd-spacing-3);
+          color: var(--ddd-theme-link, navy); 
+          font-weight: var(--ddd-font-weight-bold, 700); 
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
     `];
   }
   
