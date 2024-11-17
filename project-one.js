@@ -6,6 +6,7 @@ import { LitElement, html, css } from "lit";
 import { DDDSuper } from "@haxtheweb/d-d-d/d-d-d.js";
 import { I18NMixin } from "@haxtheweb/i18n-manager/lib/I18NMixin.js";
 
+import '@haxtheweb/simple-icon/simple-icon.js';
 
 
 /**
@@ -86,11 +87,64 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
             <span>Analyze</span>
           </button>
         </div>
-  
-        ${this.siteData ? this.renderSiteData() : html`<p>Enter a URL to analyze</p>`}
+
+        ${this.siteData ? this.renderOverview() : html`<p>Enter a URL to analyze</p>`}
+
+        ${this.siteData ? this.renderSiteData() : ''}
       </div>
     `;
   }
+
+  renderOverview() {
+    const description = this.siteData?.description || "No Description Available"; 
+    const site = this.siteData.metadata?.site || {};
+    const theme = this.siteData.metadata?.theme || {};
+    
+    const backgroundColor = theme.variables?.hexCode || "#ffffff";
+    const themeName = theme.name || "No Theme Available";
+    const siteLogo = site.logo
+      ? this.fixedUrl(this.url).replace("/site.json", `/${site.logo}`)
+      : "";
+  
+    return html`
+      <div
+        class="card site-overview"
+        style="background-color: ${backgroundColor};"
+      >
+        <div class="overview-header">
+          <h2 class="overview-title">${site.name || "No Name Available"}</h2>
+          <simple-icon
+            icon="icons:launch"
+            class="launch-icon"
+            @click="${() => window.open(this.url, "_blank")}"
+          ></simple-icon>
+        </div>
+        <img
+          src="${siteLogo}"
+          alt="Site Logo"
+          class="site-logo"
+          @error="${() => this.handleImageError(event)}"
+        />
+        <div class="site-overview-content">
+          <div class="details">
+            <p><strong>Description:</strong> ${description}</p>
+            <p><strong>Date Created:</strong> ${site.created
+              ? new Date(site.created * 1000).toLocaleString()
+              : "N/A"}</p>
+            <p><strong>Last Updated:</strong> ${site.updated
+              ? new Date(site.updated * 1000).toLocaleString()
+              : "N/A"}</p>
+            <p><strong>Theme:</strong> ${themeName}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  
+  
+  
+  
 
   renderSiteData() {
     const site = this.siteData.metadata?.site || {};
@@ -103,15 +157,15 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
     <div class="card-container">
       ${this.siteData.items && this.siteData.items.length > 0
         ? this.siteData.items.map(item => {
-            // Construct the full URL for the item's page
+            
             const fullUrl = item.location.startsWith("http")
               ? item.location
               : `${baseUrl}/${item.location}`;
 
-            // Handle optional fields like description or icon
+            
             const description = item.description || "No description available";
             const title = item.title || "No title available";
-            const icon = item.icon || "icons:info"; // Default icon if none provided
+            const icon = item.icon || "icons:info"; 
 
             return html`
               <div class="card">
@@ -137,27 +191,6 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
   `;
 }
 
-
-  // Lit scoped styles
-  // static get styles() {
-  //   return [super.styles,
-  //   css`
-  //     :host {
-  //       display: block;
-  //       color: var(--ddd-theme-primary);
-  //       background-color: var(--ddd-theme-accent);
-  //       font-family: var(--ddd-font-navigation);
-  //     }
-  //     .wrapper {
-  //       margin: var(--ddd-spacing-2);
-  //       padding: var(--ddd-spacing-4);
-  //     }
-  //     h3 span {
-  //       font-size: var(--project-one-label-font-size, var(--ddd-font-size-s));
-  //     }
-  //   `];
-  // }
-
   static get styles() {
     return [super.styles, css`
       :host {
@@ -165,20 +198,20 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
         color: var(--ddd-theme-primary);
         background-color: var(--ddd-theme-accent);
         font-family: var(--ddd-font-navigation);
-      }
+    }
       .wrapper {
         margin: var(--ddd-spacing-2);
         padding: var(--ddd-spacing-4);
         display: flex;
         flex-direction: column;
         align-items: center;
-      }
+    }
       .search-bar {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: var(--ddd-spacing-4);
-      }
+      display: flex;
+      justify-content: center;
+      margin-top: var(--ddd-spacing-4);
+      padding-bottom: 16px;
+    }
       input[type="text"] {
         padding: var(--ddd-spacing-4);
         font-size: 1.2em;
@@ -194,25 +227,103 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
       button {
         padding: var(--ddd-spacing-2) var(--ddd-spacing-3);
         font-size: 1.2em;
-        cursor: pointer;
         background-color: var(--ddd-theme-aqua, #86f1ff);
         color: var(--ddd-text-color, black);
         border: none;
         border-radius: 0 var(--ddd-border-radius, 8px) var(--ddd-border-radius, 8px) 0;
-        transition: background-color 0.3s ease, transform 0.2s ease;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
       }
       button:hover {
-        background-color: var(--ddd-theme-aqua-hover, aqua); /* Slightly darker aqua for hover effect */
-      }
+        background-color: var(--ddd-theme-aqua-hover, aqua); 
+    }
       .site-overview {
-        margin-top: var(--ddd-spacing-2);
+        grid-column: 1 / -1; 
+        color: var(--site-overview-text-color, #000); 
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: var(--ddd-spacing-4);
+        margin-bottom: var(--ddd-spacing-4);
+        border-radius: var(--ddd-border-radius, 8px);
+        box-shadow: var(--ddd-box-shadow, 0 4px 8px rgba(0, 0, 0, 0.2));
+    }
+    .site-description {
+        margin: 8px 0;
+        font-size: 1em;
+        color: var(--ddd-text-secondary, #666);
         text-align: center;
       }
+      .overview-title {
+        margin: 0; 
+        font-size: 2em; 
+        font-weight: bold;
+        text-align: center; 
+        color: var(--ddd-theme-primary, #000);
+        line-height: 1;
+    }
+      .launch-icon {
+        --simple-icon-width: 24px;
+        --simple-icon-height: 24px;
+        display: inline-block;
+        vertical-align: middle;
+        color: var(--ddd-theme-primary, #007BFF);
+      }
+      .site-logo {
+        width: 500px; 
+        height: 500px; 
+        object-fit: contain; 
+        margin-right: var(--ddd-spacing-4);
+        border-radius: var(--ddd-border-radius, 8px);
+        
+      }
+      .site-overview-content {
+        flex: 1; 
+        display: flex;
+        flex-direction: column;
+        gap: var(--ddd-spacing-2);
+      }
       .card-container {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: var(--ddd-spacing-4); 
-          margin-top: var(--ddd-spacing-4);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+        gap: var(--ddd-spacing-4); 
+        margin-top: var(--ddd-spacing-4);
+        width: 100%; 
+      }
+      .site-overview h2 {
+        margin: 0;
+        font-size: 1.5em;
+        font-weight: bold;
+        color: var(--ddd-theme-primary, #000);
+      }
+      .site-overview p {
+        margin: 0;
+        font-size: 1em;
+        color: var(--ddd-text-secondary, #666);
+      }
+        .overview-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px; 
+        margin-bottom: 16px;
+      }
+      .overview-header a {
+        text-decoration: none;
+        color: var(--ddd-theme-primary);
+      }
+      .site-overview .details {
+        margin-top: var(--ddd-spacing-2);
+        font-size: 1.2em;
+        color: var(--ddd-text-secondary, #666);
+      }
+      .site-overview img.site-logo {
+          width: 100px;
+          height: auto;
+          margin: var(--ddd-spacing-2) 0;
         }
       .card {
           background-color: var(--ddd-theme-background, #fff); 
@@ -234,7 +345,7 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
         } 
         .card p {
           margin: var(--ddd-spacing-2) 0;
-          font-size: var(--ddd-font-size-xs); 
+          font-size: 0.8em; 
           color: var(--ddd-text-secondary, #666); 
         }
         .card a {
