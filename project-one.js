@@ -50,6 +50,7 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
     return Array.from(tagsSet);
   }
 
+  //method that finds unique tags from the site.json for selecting
   renderTagFilters() {
     const uniqueTags = this.getUniqueTags();
   
@@ -92,19 +93,29 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
       console.warn("Please enter a valid URL");
       return;
     }
+    
   
     // 'fix' the entered URL (add https:// and /site.json if missing)
     const apiUrl = this.fixedUrl(this.url);
     this.url = apiUrl;
 
+    
     try {
       const response = await fetch(apiUrl);
       if (!response.ok) throw new Error("Invalid URL or no site.json found");
       this.siteData = await response.json();
+
+
+      if (!this.siteData || !this.siteData.items || !this.siteData.metadata) {
+        console.error("Invalid site.json schema");
+        this.siteData = null;
+        return;
+      }
     } catch (error) {
       console.error("Failed to fetch site data:", error);
       this.siteData = null;
     }
+    
   }
   
 
@@ -130,6 +141,9 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
         ${this.siteData ? this.renderTagFilters() : ''}
 
         ${this.siteData ? this.renderSiteData() : ''}
+        ${this.siteData === null && this.url
+      ? html`<p>Failed to fetch data. Please check the URL and try again.</p>`
+      : ''}
       </div>
     `;
   }
@@ -164,6 +178,8 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
           ></simple-icon>
         </h2>
       </div>
+
+
         <img
           src="${siteLogo}"
           alt="Site Logo"
@@ -174,8 +190,8 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
           <div class="details">
             <p><strong>Description:</strong> ${description}</p>
             <p><strong>Date Created:</strong> ${site.created
-              ? new Date(site.created * 1000).toLocaleString()
-              : "N/A"}</p>
+              ? new Date(site.created * 1000).toLocaleString() : "N/A"}</p>
+
             <p><strong>Last Updated:</strong> ${site.updated
               ? new Date(site.updated * 1000).toLocaleString()
               : "N/A"}</p>
@@ -221,6 +237,7 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
               const description = item.description || "";
               const title = item.title || "No title available";
               const imageSrc = item.metadata?.images?.[0]
+
                 ? `${baseUrl}/${item.metadata.images[0]}`
                 : null;
   
@@ -277,6 +294,7 @@ export class ProjectOne extends DDDSuper(I18NMixin(LitElement)) {
                       <a href="${sourceUrl}" target="_blank">View Source</a>
                     </div>
                   </div>
+                  
                 </div>
               `;
             })
